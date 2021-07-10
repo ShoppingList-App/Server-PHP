@@ -14,6 +14,6 @@ Usage: cli.php <user> <pass>
 Multiple paths must be mapped to index.php. I used following mod_rewrite in Apache:
 ```
 RewriteEngine on
-ewritecond %{REQUEST_FILENAME} !/index.php
+Rewritecond %{REQUEST_FILENAME} !/index.php
 RewriteRule ^(.*)$ /index.php?path=$1 [NC,L,QSA]
 ```
