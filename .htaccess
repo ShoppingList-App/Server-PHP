@@ -2,4 +2,9 @@ RewriteEngine on
 Rewritecond %{REQUEST_FILENAME} !/index.php
 RewriteRule ^(.*)$ /index.php?path=$1 [NC,L,QSA]
 
-
+# let swagger editor access this site
+<IfModule mod_headers.c>
+	Header set Access-Control-Allow-Origin "https://swagger.devloop.de"
+	Header set Access-Control-Allow-Headers "Authorization,Content-Type"
+	Header set Access-Control-Allow-Methods "*"
+</IfModule>

@@ -1,6 +1,6 @@
 <?php
 
-define('DATA', '../data');
+require_once('config.php');
 
 class Database {
 
@@ -11,6 +11,7 @@ class Database {
 		$filename = self::getFilename($user, $pass);
 		if (file_exists($filename)) {
 			$this->sqlite = new SQLite3($filename, SQLITE3_OPEN_READWRITE);
+			$this->updateDatabaseSchema();
 		} else {
 			throw new Exception("Database not found");
 		}
@@ -51,6 +52,27 @@ class Database {
 		return file_exists($filename);
 	}
 
+	private function updateDatabaseSchema() {
+		$version = $this->sqlite->querySingle('SELECT version FROM meta LIMIT 1');
+		if ($version === false) {
+			// no meta table
+			$version = 0;
+			$this->sqlite->exec('CREATE TABLE meta (version integer)');
+			$this->sqlite->exec('INSERT INTO meta (version) VALUES (0)');
+		}
+
+		if ($version < 1) {
+			$version = 1;
+			$this->sqlite->exec('ALTER TABLE storeItem ADD COLUMN barcode varchar');
+			$this->sqlite->exec('UPDATE meta SET version = ' . $version);
+		}
+
+		if ($version < 2) {
+			$version = 2;
+			// ...
+		}
+	}
+
 	public function getShoppingLists() {
 		$res = $this->sqlite->query('SELECT * FROM shoppingList');
 		return $this->getAll($res);
@@ -79,11 +101,15 @@ class Database {
 		return $sis;
 	}
 
-	public function getStoreItems($text, $limit) {
-		$sql = 'SELECT * FROM storeItem';
+	public function getStoreItems($text, $barcode, $limit) {
+		$sql = 'SELECT * FROM storeItem WHERE 1 = 1';
 
 		if ($text !== null) {
-			$sql .= " WHERE text LIKE '%" . SQLite3::escapeString($text) . "%'";
+			$sql .= " AND text LIKE '%" . SQLite3::escapeString($text) . "%'";
+		}
+
+		if ($barcode !== null) {
+			$sql .= " AND barcode = '" . SQLite3::escapeString($barcode) . "'";
 		}
 
 		if ($limit !== null) {
@@ -118,7 +144,24 @@ class Database {
 	}
 
 	public function updateStoreItem($obj) {
-		$this->sqlite->exec("UPDATE storeItem SET text = '" . SQLite3::escapeString($obj->text) . "', unit = '" . SQLite3::escapeString($obj->unit) . "', sortKey = " . SQLite3::escapeString($obj->sortKey) . " WHERE id = " . SQLite3::escapeString($obj->id));
+		$sql = "UPDATE storeItem SET text = '" . SQLite3::escapeString($obj->text) . "', unit = '" . SQLite3::escapeString($obj->unit) . "'";
+		
+		$sql .= ", sortKey = ";
+		if ($obj->sortKey === null) {
+			$sql .= "NULL";
+		} else {
+			$sql .= "'" . SQLite3::escapeString($obj->sortKey) . "'";
+		}
+
+		$sql .= ", barcode = ";
+		if ($obj->barcode === null) {
+			$sql .= "NULL";
+		} else {
+			$sql .= "'" . SQLite3::escapeString($obj->barcode) . "'";
+		}
+
+		$sql .= " WHERE id = " . SQLite3::escapeString($obj->id);
+		$this->sqlite->exec($sql);
 	}
 
 	public function recalculateStoreItemSort() {
