@@ -1,7 +1,7 @@
 <?php
 
-if ($_SERVER['HTTP_X_FORWARDED_PROTO'] !== 'https') {
-	die('HTTPS ONLY');
+if ($_SERVER['REQUEST_SCHEME'] !== 'https' && $_SERVER['HTTP_X_FORWARDED_PROTO'] !== 'https') {
+	die('PLEASE USE HTTPS');
 }
 
 require_once('Database.php');
