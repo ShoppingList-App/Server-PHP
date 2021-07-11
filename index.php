@@ -26,7 +26,7 @@ if (!$authed) {
 	}
 }
 
-$service = $_REQUEST['path'];
+$service = '/' . $_REQUEST['path'];
 $method = $_SERVER['REQUEST_METHOD'];
 
 function jsonOut($foo) {
@@ -91,5 +91,11 @@ if ($service === '/v1/shoppingLists') {
 		$db->updateStoreItem($obj);
 	}
 } else {
-	die('UPSI');
+?>
+<html>
+<body>
+Hi <?= $user ?>
+</body>
+</html>
+<?php
 }

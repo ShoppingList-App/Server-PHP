@@ -1,6 +1,6 @@
 <?php
 
-define('DATA', 'data');
+define('DATA', '../data');
 
 class Database {
 
